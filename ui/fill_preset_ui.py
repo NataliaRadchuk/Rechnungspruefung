@@ -1,17 +1,29 @@
-import tkinter as tk
-from tkinter import filedialog, messagebox
-from ttkbootstrap import ttk
-from file_handler import FileHandler
+import tkinter as tk #library for ui 
+from tkinter import filedialog, messagebox #modules to open file system, to show pop ups
+from ttkbootstrap import ttk #styles
+from file_handler import FileHandler #filehandler class
 
-class FillPresetTab:
+"""
+Tab Fill-Preset
+UI to add the different files and the output directory 
+and to show messages
+"""
+class FillPresetTab: 
+
+    """ 
+    Init - Consturctor, stlyes, font_size, frame, and a file handler instance to work with the files
+    """
     def __init__(self, notebook, style):
         self.style = style
         self.font_size = 14  # Default font size
         self.frame = ttk.Frame(notebook, padding="10")
         notebook.add(self.frame, text="Fill Preset")
         self.create_widgets()
-        self.file_ops = FileHandler()
+        self.file_ops = FileHandler()  
 
+    """ 
+    create_widgets: makes lables, input fields, buttons in the frontend  
+    """
     def create_widgets(self):
         # Configure column weight for resizing
         self.frame.columnconfigure(1, weight=1)
@@ -42,6 +54,10 @@ class FillPresetTab:
         self.status_label = ttk.Label(self.frame, text="", font=self.font_large)
         self.status_label.grid(row=4, column=0, columnspan=3, pady=10)
 
+
+    """
+    methods to choose files from dictionary 
+    """
     def select_input_file(self):
         file_path = filedialog.askopenfilename(filetypes=[("Excel and CSV files", "*.xlsx;*.xls;*.xlsm;*.csv")])
         self.input_entry.delete(0, tk.END)
@@ -57,6 +73,10 @@ class FillPresetTab:
         self.output_dir_entry.delete(0, tk.END)
         self.output_dir_entry.insert(0, dir_path)
 
+
+    """
+    start/process button: checks if all data is full, tries to do fileHandler and if it works it will make a status update
+    """
     def start_process(self):
         input_file = self.input_entry.get()
         preset_file = self.preset_entry.get()
