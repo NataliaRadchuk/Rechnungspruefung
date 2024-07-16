@@ -5,6 +5,8 @@ from openpyxl import load_workbook
 from openpyxl.styles import Border, Side
 import chardet
 import locale
+from openpyxl.styles import Font, PatternFill
+
 
 class FileHandler:
     def __init__(self):
@@ -99,6 +101,50 @@ class FileHandler:
             black_border = Border(top=Side(style='thin', color='000000'))
             for col in ws[last_row]:
                 col.border = black_border
+
+            # Neuer Code: Einfügen des spezifischen Inhalts
+            last_row += 3  # Zwei Leerzeilen nach der letzten Zeile
+
+            # "gebucht" in Spalte G
+            ws.cell(row=last_row, column=7, value="gebucht")
+
+            # Kopieren des Inhalts der letzten Zeile in Spalte H
+            ws.cell(row=last_row, column=8, value=ws.cell(row=last_row-2, column=8).value)
+
+            # "Hotelrechnung" in Spalte J
+            ws.cell(row=last_row, column=10, value="Hotelrechnung")
+
+            # "Rabatt" in der nächsten Zeile, Spalte J
+            ws.cell(row=last_row+1, column=10, value="Rabatt")
+
+            # P1: Strich unter "Rabatt" und über "Rechnung" in Spalte I-J
+            for col in range(9, 11):
+                ws.cell(row=last_row+2, column=col).border = Border(top=Side(style='thin'))
+
+            # "Rechnung" in der übernächsten Zeile, Spalte J
+            cell = ws.cell(row=last_row+2, column=10, value="Rechnung")
+            cell.font = Font(bold=True)  # P2: "Rechnung" fett machen
+
+            # "Depo" in der darauffolgenden Zeile, Spalte J
+            ws.cell(row=last_row+3, column=10, value="Depo")
+
+            # P3: Strich unter "Depo" und über "Rest OP" in Spalte I-J
+            for col in range(9, 11):
+                ws.cell(row=last_row+4, column=col).border = Border(top=Side(style='thin'))
+
+            # "Diff" in Spalte H und "Rest OP" in Spalte J der letzten Zeile
+            diff_cell = ws.cell(row=last_row+4, column=8, value="Diff")
+            diff_cell.font = Font(bold=True)  # P2: "Diff" fett machen
+            # P4: "Diff" neon gelb markieren (Spalte G und H)
+            for col in range(7, 9):
+                ws.cell(row=last_row+4, column=col).fill = PatternFill(start_color="00FFFF00", end_color="00FFFF00", fill_type="solid")
+
+            rest_op_cell = ws.cell(row=last_row+4, column=10, value="Rest OP")
+            rest_op_cell.font = Font(bold=True)  # P2: "Rest OP" fett machen
+
+            # P5: Dünner Doppelstrich unter "Rest OP" von Spalte I-J
+            for col in range(9, 11):
+                ws.cell(row=last_row+5, column=col).border = Border(top=Side(style='double'))
 
             base_name = os.path.splitext(os.path.basename(preset_file))[0]
             output_file = os.path.join(output_dir, f"{base_name}_filled.xlsm")
