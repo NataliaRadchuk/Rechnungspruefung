@@ -2,6 +2,7 @@ import tkinter as tk #library for ui
 from tkinter import filedialog, messagebox #modules to open file system, to show pop ups
 from ttkbootstrap import ttk #styles
 from file_handler import FileHandler #filehandler class
+import os
 
 """
 Tab Fill-Preset
@@ -36,12 +37,6 @@ class FillPresetTab:
         self.input_button = ttk.Button(self.frame, text="Browse", command=self.select_input_file, style="TButton")
         self.input_button.grid(row=0, column=2, padx=10, pady=10)
 
-        ttk.Label(self.frame, text="Preset File:", font=self.font_large).grid(row=1, column=0, padx=10, pady=10, sticky=tk.W)
-        self.preset_entry = ttk.Entry(self.frame, font=self.font_large, width=50)
-        self.preset_entry.grid(row=1, column=1, padx=10, pady=10, sticky=(tk.W, tk.E))
-        self.preset_button = ttk.Button(self.frame, text="Browse", command=self.select_preset_file, style="TButton")
-        self.preset_button.grid(row=1, column=2, padx=10, pady=10)
-
         ttk.Label(self.frame, text="Output Directory:", font=self.font_large).grid(row=2, column=0, padx=10, pady=10, sticky=tk.W)
         self.output_dir_entry = ttk.Entry(self.frame, font=self.font_large, width=50)
         self.output_dir_entry.grid(row=2, column=1, padx=10, pady=10, sticky=(tk.W, tk.E))
@@ -63,11 +58,6 @@ class FillPresetTab:
         self.input_entry.delete(0, tk.END)
         self.input_entry.insert(0, file_path)
 
-    def select_preset_file(self):
-        file_path = filedialog.askopenfilename(filetypes=[("Excel files", "*.xlsm")])
-        self.preset_entry.delete(0, tk.END)
-        self.preset_entry.insert(0, file_path)
-
     def select_output_dir(self):
         dir_path = filedialog.askdirectory()
         self.output_dir_entry.delete(0, tk.END)
@@ -79,11 +69,17 @@ class FillPresetTab:
     """
     def start_process(self):
         input_file = self.input_entry.get()
-        preset_file = self.preset_entry.get()
         output_dir = self.output_dir_entry.get()
 
-        if not input_file or not preset_file or not output_dir:
+        current_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        preset_file = os.path.join(current_dir, "templates", "template.xlsm")
+
+        if not input_file or not output_dir:
             messagebox.showerror("Input Error", "Please select all required files and output directory.")
+            return
+
+        if not os.path.exists(preset_file):
+            messagebox.showerror("File Error", f"Template file not found: {preset_file}")
             return
 
         try:

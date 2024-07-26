@@ -6,3 +6,4 @@ Bottleneck:
  - which encodings to read? 
         - surely UTF-8 BOM
         - UTF-16 LE
+- to dos:
