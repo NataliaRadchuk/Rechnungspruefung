@@ -55,7 +55,7 @@ class FileHandler:
             logging.error(f"An error occurred: {e}")
             return None
 
-    def append_trimmed_to_existing(self, trimmed_df, preset_file, output_dir):
+    def append_trimmed_to_existing(self, trimmed_df, preset_file, output_dir, output_filename):
         try:
             if trimmed_df is None or trimmed_df.empty:
                 raise ValueError("Trimmed DataFrame is empty.")
@@ -111,43 +111,37 @@ class FileHandler:
             # Kopieren des Inhalts der letzten Zeile in Spalte H
             ws.cell(row=last_row, column=8, value=ws.cell(row=last_row-2, column=8).value)
 
-            # "Hotelrechnung" in Spalte J
-            ws.cell(row=last_row, column=10, value="Hotelrechnung")
+            # Hinzufügen der Wörter in Spalte J und Berechnungen in Spalte I
+            words = ["Hotelrechnung", "Rabatt", "Rechnung", "Depo", "Guthaben"]
+            for i, word in enumerate(words):
+                ws.cell(row=last_row+i, column=10, value=word)
 
-            # "Rabatt" in der nächsten Zeile, Spalte J
-            ws.cell(row=last_row+1, column=10, value="Rabatt")
+            # Berechnung für "Rechnung" in Spalte I
+            ws.cell(row=last_row+2, column=9, value=f"=SUM(I{last_row}:I{last_row+1})")
 
-            # P1: Strich unter "Rabatt" und über "Rechnung" in Spalte I-J
+            # Berechnung für "Guthaben" in Spalte I
+            ws.cell(row=last_row+4, column=9, value=f"=SUM(I{last_row+2}:I{last_row+3})")
+
+            # Striche und Formatierungen
             for col in range(9, 11):
                 ws.cell(row=last_row+2, column=col).border = Border(top=Side(style='thin'))
-
-            # "Rechnung" in der übernächsten Zeile, Spalte J
-            cell = ws.cell(row=last_row+2, column=10, value="Rechnung")
-            cell.font = Font(bold=True)  # P2: "Rechnung" fett machen
-
-            # "Depo" in der darauffolgenden Zeile, Spalte J
-            ws.cell(row=last_row+3, column=10, value="Depo")
-
-            # P3: Strich unter "Depo" und über "Rest OP" in Spalte I-J
-            for col in range(9, 11):
                 ws.cell(row=last_row+4, column=col).border = Border(top=Side(style='thin'))
-
-            # "Diff" in Spalte H und "Rest OP" in Spalte J der letzten Zeile
-            diff_cell = ws.cell(row=last_row+4, column=8, value="Diff")
-            diff_cell.font = Font(bold=True)  # P2: "Diff" fett machen
-            # P4: "Diff" neon gelb markieren (Spalte G und H)
-            for col in range(7, 9):
-                ws.cell(row=last_row+4, column=col).fill = PatternFill(start_color="00FFFF00", end_color="00FFFF00", fill_type="solid")
-
-            rest_op_cell = ws.cell(row=last_row+4, column=10, value="Rest OP")
-            rest_op_cell.font = Font(bold=True)  # P2: "Rest OP" fett machen
-
-            # P5: Dünner Doppelstrich unter "Rest OP" von Spalte I-J
-            for col in range(9, 11):
                 ws.cell(row=last_row+5, column=col).border = Border(top=Side(style='double'))
 
-            base_name = os.path.splitext(os.path.basename(preset_file))[0]
-            output_file = os.path.join(output_dir, f"{base_name}_filled.xlsm")
+            # "Rechnung" und "Guthaben" fett machen
+            ws.cell(row=last_row+2, column=10).font = Font(bold=True)
+            ws.cell(row=last_row+4, column=10).font = Font(bold=True)
+
+            # "Diff" in Spalte G statt H, fett und neon gelb markiert
+            diff_cell = ws.cell(row=last_row+4, column=7, value="Diff")
+            diff_cell.font = Font(bold=True)
+            for col in range(7, 9):
+                ws.cell(row=last_row+4, column=col).fill = PatternFill(start_color="00FFFF00", end_color="00FFFF00", fill_type="solid")
+            # Neue Berechnung neben "Diff"
+            ws.cell(row=last_row+4, column=8, value=f"=I{last_row}-H{last_row}")
+
+
+            output_file = os.path.join(output_dir, output_filename)
 
             wb.save(output_file)
             logging.info(f"Successfully appended trimmed data to {output_file} in worksheet 'Prüf'")
