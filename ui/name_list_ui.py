@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import filedialog, messagebox
 from ttkbootstrap import ttk
-from file_handler import FileHandler
+from name_list_handler import NameListHandler
 import os
 
 class NameListTab:
@@ -11,7 +11,7 @@ class NameListTab:
         self.frame = ttk.Frame(notebook, padding="10")
         notebook.add(self.frame, text="Fill Preset")
         self.create_widgets()
-        self.file_ops = FileHandler()
+        self.file_ops = NameListHandler()
 
     def create_widgets(self):
         self.frame.columnconfigure(1, weight=1)
@@ -74,8 +74,8 @@ class NameListTab:
             return
 
         try:
-            trimmed_df = self.file_ops.copy_and_trim_file(input_file)
-            self.file_ops.append_trimmed_to_existing(trimmed_df, preset_file, output_dir, output_filename)
+            prepared_table = self.file_ops.prepare_table(input_file)
+            self.file_ops.append_into_preset(prepared_table, preset_file, output_dir, output_filename)
             self.status_label.config(text="Process completed successfully.", foreground="green")
         except Exception as e:
             messagebox.showerror("Processing Error", str(e))
