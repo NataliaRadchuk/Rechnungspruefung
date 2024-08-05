@@ -3,6 +3,10 @@ import os
 import logging
 import chardet
 import locale
+import numpy as np
+from openpyxl.utils.dataframe import dataframe_to_rows
+import openpyxl
+
 from file_handler import FileHandler 
 
 class NameListHandler:
@@ -13,15 +17,114 @@ class NameListHandler:
 
     def prepare_table(self, name_list_file):
         pandas_file = self.file_ops.copy_and_trim_file(name_list_file)
-        logging.info(f"We are here and everythinig seems to work ")
+    
+        if pandas_file is None or pandas_file.empty:
+            logging.error("Failed to load or process the file, or the file is empty.")
+            return None
+
+        logging.info("File loaded and trimmed successfully.")
         logging.info(f"Trimmed DataFrame:\n{pandas_file}")
-        # TODO Logik
+
+        # Aufgabe 1: Letzte Spalte löschen, wenn sie nur leere Werte enthält
+        if pandas_file.iloc[:, -1].astype(str).str.strip().eq('').all():
+            pandas_file = pandas_file.iloc[:, :-1]
+
+        # Aufgabe 2: Spalte K (Roomnights) löschen, falls vorhanden
+        if pandas_file.shape[1] >= 11:
+            pandas_file = pandas_file.iloc[:, :10]
+
+        # Aufgabe 4: Spalte A löschen (falls noch nicht geschehen)
+        if pandas_file.shape[1] > 1:
+            pandas_file = pandas_file.iloc[:, 1:]
+
+        # Aufgabe 5: Erste Zeile entfernen
+        # if pandas_file.shape[0] > 1:
+        #     pandas_file = pandas_file.iloc[1:]
+
+        # Aufgabe 3: Inhalt von Spalte I nach J verschieben, I leer lassen
+        if pandas_file.shape[1] >= 9:
+            # Füge eine neue leere Spalte am Ende hinzu
+            pandas_file['New'] = ''
+            # Verschiebe den Inhalt von I nach J
+            pandas_file.iloc[:, -1] = pandas_file.iloc[:, -2]
+            # Leere Spalte I
+            pandas_file.iloc[:, -2] = ''
+        
+        # Stelle sicher, dass wir genau 10 Spalten haben
+        if pandas_file.shape[1] < 10:
+            for i in range(pandas_file.shape[1], 10):
+                pandas_file[f'New_{i}'] = ''
+        elif pandas_file.shape[1] > 10:
+            pandas_file = pandas_file.iloc[:, :10]
+
+        # Spalten neu indizieren
+        pandas_file.columns = [chr(65 + i) for i in range(10)]
+
+        # Aufgabe 7: Zeilen basierend auf Werten in Spalte H duplizieren
+        new_rows = []
+        for index, row in pandas_file.iterrows():
+            h_value = row['H']
+            try:
+                h_value = int(float(h_value))  # Versuche, den Wert in eine Ganzzahl umzuwandeln
+                if h_value > 0:
+                    for i in range(h_value):
+                        new_row = row.copy()
+                        new_row['H'] = 1
+                        new_rows.append(new_row)
+                else:
+                    new_rows.append(row)  # Behalte die Originalzeile für Werte <= 0
+            except ValueError:
+                new_rows.append(row)  # Behalte die Originalzeile, wenn H keine Zahl istthe original row if H is not a number
+
+        pandas_file = pd.DataFrame(new_rows, columns=pandas_file.columns)
+
+        # Aufgabe 2: Kopiere und füge den gesamten Inhalt ein, füge "-F" in Spalte F hinzu
+        copied_df = pandas_file.copy()
+        copied_df['F'] = copied_df['F'].astype(str) + '-F'
+        pandas_file = pd.concat([pandas_file, copied_df], ignore_index=True)
+
+        # Alphabetisch sortieren nach Spalte F
+        pandas_file = pandas_file.sort_values(by='C')
+
+        logging.info(f"Prepared DataFrame:\n{pandas_file}")
         return pandas_file
     
     def append_into_preset(self, trimmed_df, preset_file, output_dir, output_filename):
-        logging.info(f"in append to preset")
-        return None
-    
+        logging.info("In append to preset")
+
+        # Lade das bestehende Workbook
+        template_path = os.path.join('templates', preset_file)
+        workbook = openpyxl.load_workbook(template_path, keep_vba=True)
+
+        # Wähle den Tab "SR Lt. AM"
+        sheet = workbook['SR Lt. AM']
+
+        # Füge trimmed_df ab Zeile 12, Spalte A ein
+        for r, row in enumerate(dataframe_to_rows(trimmed_df, index=False, header=False), start=12):
+            for c, value in enumerate(row, start=1):
+                cell = sheet.cell(row=r, column=c)
+                if isinstance(value, (int, float)):
+                    cell.value = value
+                else:
+                    cell.value = str(value)
+            # Füge die Formel in Spalte I ein
+            sheet.cell(row=r, column=9).value = f'=E{r}-D{r}'
+        
+        # Aufgabe 3: Einträge aus Spalte H in die innere Tabelle einfügen
+        unique_entries = sorted(set(trimmed_df['F'].astype(str)))
+        
+        for i, entry in enumerate(unique_entries):
+            if i < 6:  # Für die ersten 6 Einträge
+                sheet.cell(row=i+3, column=11).value = entry
+            else:  # Für zusätzliche Einträge
+                sheet.insert_rows(8)  # Füge eine neue Zeile vor Zeile 9 ein
+                sheet.cell(row=8, column=11).value = entry
+
+        # Speicher das Workbook an den angegebenen Speicherort
+        output_path = os.path.join(output_dir, output_filename)
+        workbook.save(output_path)
+        logging.info(f"Workbook saved to {output_path}")
+        
 name_list_handler = NameListHandler()
 input_file = 'path_to_input_file.csv'
 preset_file = 'path_to_preset_file.xlsm'
