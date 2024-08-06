@@ -2,10 +2,14 @@ import pandas as pd
 import os
 import logging
 import chardet
+from datetime import datetime
 import locale
 import numpy as np
 from openpyxl.utils.dataframe import dataframe_to_rows
 import openpyxl
+from openpyxl.utils import get_column_letter
+from openpyxl.styles import PatternFill
+
 
 from file_handler import FileHandler 
 
@@ -100,6 +104,7 @@ class NameListHandler:
         sheet = workbook['SR Lt. AM']
 
         # Füge trimmed_df ab Zeile 12, Spalte A ein
+        last_data_row = 11  # Initialisiere mit der Zeile vor den Daten
         for r, row in enumerate(dataframe_to_rows(trimmed_df, index=False, header=False), start=12):
             for c, value in enumerate(row, start=1):
                 cell = sheet.cell(row=r, column=c)
@@ -109,16 +114,51 @@ class NameListHandler:
                     cell.value = str(value)
             # Füge die Formel in Spalte I ein
             sheet.cell(row=r, column=9).value = f'=E{r}-D{r}'
+            last_data_row = r  # Aktualisiere die letzte Datenzeile
+
+        # Konvertiere Spalte D und E in Datumsformat
+        def convert_to_date(cell):
+            if cell.value:
+                try:
+                    date_value = datetime.strptime(str(cell.value), "%d.%m.%Y")
+                    cell.value = date_value
+                    cell.number_format = 'DD.MM.YYYY'
+                except ValueError:
+                    logging.warning(f"Konnte Datum in Zelle {cell.coordinate} nicht konvertieren: {cell.value}")
+
+        for col in [4, 5]:  # 4 für Spalte D, 5 für Spalte E
+            for row in range(12, last_data_row + 1):
+                convert_to_date(sheet.cell(row=row, column=col))
         
         # Aufgabe 3: Einträge aus Spalte H in die innere Tabelle einfügen
         unique_entries = sorted(set(trimmed_df['F'].astype(str)))
+        
         
         for i, entry in enumerate(unique_entries):
             if i < 6:  # Für die ersten 6 Einträge
                 sheet.cell(row=i+3, column=11).value = entry
             else:  # Für zusätzliche Einträge
-                sheet.insert_rows(8)  # Füge eine neue Zeile vor Zeile 9 ein
-                sheet.cell(row=8, column=11).value = entry
+                # sheet.insert_rows(8)  # Füge eine neue Zeile vor Zeile 9 ein
+                # sheet.cell(row=8, column=11).value = entry
+                None
+        
+        # Suche nach "Gesamt" in Spalte K ab Zeile 10
+        for row in range(10, sheet.max_row + 1):
+            if sheet.cell(row=row, column=11).value == "Gesamt":
+                # Passe die Formel an, um nur den Bereich mit Daten zu berücksichtigen
+                sheet.cell(row=row, column=12).value = f'=MIN(D12:D{last_data_row})-2'
+                sheet.cell(row=row, column=12).number_format = 'DD.MM.YYYY'
+                break
+        
+        # Färbe Zellen von Spalte L bis AD ein, wenn sie nicht "0" sind
+        fill = PatternFill(start_color="FFFF00", end_color="FFFF00", fill_type="solid")  # Gelbe Füllung
+        for row in range(12, last_data_row + 1):
+            for col in range(12, 30):  # L = 12, AD = 30
+                cell = sheet.cell(row=row, column=col)
+                if cell.data_type == 'f':  # Wenn es eine Formel ist
+                    cell.value = f'=IF({cell.value}="0","0",{cell.value})'  # Umschließe die originale Formel
+                if cell.value != "0":
+                    cell.fill = fill
 
         # Speicher das Workbook an den angegebenen Speicherort
         output_path = os.path.join(output_dir, output_filename)
