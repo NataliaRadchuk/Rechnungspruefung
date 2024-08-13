@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import filedialog, messagebox
 from ttkbootstrap import ttk
-from name_list_handler import NameListHandler
+from pruefung_handler import PruefungHandler
 import os
 
 class PruefungTab:
@@ -11,7 +11,7 @@ class PruefungTab:
         self.frame = ttk.Frame(notebook, padding="10")
         notebook.add(self.frame, text="Prüfung")
         self.create_widgets()
-        self.file_ops = NameListHandler()
+        self.file_ops = PruefungHandler()
 
     def create_widgets(self):
         self.frame.columnconfigure(1, weight=1)
@@ -21,26 +21,26 @@ class PruefungTab:
         ttk.Label(self.frame, text="Report:", font=self.font_large).grid(row=0, column=0, padx=10, pady=10, sticky=tk.W)
         self.input_entry = ttk.Entry(self.frame, font=self.font_large, width=50)
         self.input_entry.grid(row=0, column=1, padx=10, pady=10, sticky=(tk.W, tk.E))
-        self.input_button = ttk.Button(self.frame, text="Suchen", command=self.select_input_file, style="TButton")
+        self.input_button = ttk.Button(self.frame, text="Suchen", command=self.select_input_file)
         self.input_button.grid(row=0, column=2, padx=10, pady=10)
 
         # Namensliste File
         ttk.Label(self.frame, text="Namensliste:", font=self.font_large).grid(row=1, column=0, padx=10, pady=10, sticky=tk.W)
         self.namensliste_entry = ttk.Entry(self.frame, font=self.font_large, width=50)
         self.namensliste_entry.grid(row=1, column=1, padx=10, pady=10, sticky=(tk.W, tk.E))
-        self.namensliste_button = ttk.Button(self.frame, text="Suchen", command=self.select_namensliste_file, style="TButton")
+        self.namensliste_button = ttk.Button(self.frame, text="Suchen", command=self.select_namensliste_file)
         self.namensliste_button.grid(row=1, column=2, padx=10, pady=10)
 
         # Checkbox
         self.checkbox_var = tk.BooleanVar()
-        self.checkbox = ttk.Checkbutton(self.frame, text="Namensliste NICHT aus Tableau", variable=self.checkbox_var, style="TCheckbutton")
+        self.checkbox = ttk.Checkbutton(self.frame, text="Namensliste NICHT aus Tableau", variable=self.checkbox_var)
         self.checkbox.grid(row=2, column=0, columnspan=3, padx=10, pady=10, sticky=tk.W)
 
         # Output Directory
         ttk.Label(self.frame, text="Speicherort:", font=self.font_large).grid(row=3, column=0, padx=10, pady=10, sticky=tk.W)
         self.output_dir_entry = ttk.Entry(self.frame, font=self.font_large, width=50)
         self.output_dir_entry.grid(row=3, column=1, padx=10, pady=10, sticky=(tk.W, tk.E))
-        self.output_button = ttk.Button(self.frame, text="Suchen", command=self.select_output_dir, style="TButton")
+        self.output_button = ttk.Button(self.frame, text="Suchen", command=self.select_output_dir)
         self.output_button.grid(row=3, column=2, padx=10, pady=10)
 
         # Output Filename
@@ -50,7 +50,7 @@ class PruefungTab:
         ttk.Label(self.frame, text=".xlsm", font=self.font_large).grid(row=4, column=2, padx=10, pady=10, sticky=tk.W)
 
         # Start Button
-        self.process_button = ttk.Button(self.frame, text="Start", command=self.start_process, style="TButton")
+        self.process_button = ttk.Button(self.frame, text="Start", command=self.start_process)
         self.process_button.grid(row=5, column=0, columnspan=3, pady=20)
 
         # Status Label
@@ -98,8 +98,10 @@ class PruefungTab:
             return
 
         try:
-            prepared_table = self.file_ops.prepare_table(input_file)
-            self.file_ops.append_into_preset(prepared_table, preset_file, output_dir, output_filename)
+            # prepared_table = self.file_ops.prepare_table(input_file)
+            # self.file_ops.append_into_preset(prepared_table, preset_file, output_dir, output_filename)
+            
+            self.file_ops.process_files(input_file, namensliste_file, option_aktiviert, output_dir, output_filename)
             self.status_label.config(text="Process completed successfully.", foreground="green")
         except Exception as e:
             messagebox.showerror("Processing Error", str(e))
@@ -108,13 +110,13 @@ class PruefungTab:
     def update_widgets(self, font_size):
         self.font_size = font_size
         self.font_large = f"Helvetica {self.font_size}"
-        print(f"Updating widgets to font size: {self.font_size}")
         for widget in self.frame.winfo_children():
-            print(f"Updating {widget} to font size {self.font_size}")
-            if isinstance(widget, ttk.Label):
-                widget.config(font=self.font_large)
-            elif isinstance(widget, ttk.Entry):
-                widget.config(font=self.font_large)
-            elif isinstance(widget, ttk.Button):
-                style_name = widget.cget("style") or "TButton"
-                self.style.configure(style_name, font=self.font_large)
+            if isinstance(widget, ttk.Button):
+                widget.configure(style='TButton')
+            elif isinstance(widget, ttk.Entry) or isinstance(widget, ttk.Label):
+                widget.configure(font=self.font_large)
+            elif isinstance(widget, ttk.Checkbutton):
+                widget.configure(style='TCheckbutton')
+
+        self.style.configure('TButton', font=self.font_large)
+        self.style.configure('TCheckbutton', font=self.font_large)

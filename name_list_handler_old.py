@@ -9,7 +9,7 @@ from openpyxl.utils.dataframe import dataframe_to_rows
 import openpyxl
 from openpyxl.utils import get_column_letter
 from openpyxl.styles import PatternFill
-from openpyxl.utils import get_column_letter
+
 
 from file_handler import FileHandler 
 
@@ -40,6 +40,10 @@ class NameListHandler:
         # Aufgabe 4: Spalte A löschen (falls noch nicht geschehen)
         if pandas_file.shape[1] > 1:
             pandas_file = pandas_file.iloc[:, 1:]
+
+        # Aufgabe 5: Erste Zeile entfernen
+        # if pandas_file.shape[0] > 1:
+        #     pandas_file = pandas_file.iloc[1:]
 
         # Aufgabe 3: Inhalt von Spalte I nach J verschieben, I leer lassen
         if pandas_file.shape[1] >= 9:
@@ -74,7 +78,7 @@ class NameListHandler:
                 else:
                     new_rows.append(row)  # Behalte die Originalzeile für Werte <= 0
             except ValueError:
-                new_rows.append(row)  # Behalte die Originalzeile, wenn H keine Zahl ist
+                new_rows.append(row)  # Behalte die Originalzeile, wenn H keine Zahl istthe original row if H is not a number
 
         pandas_file = pd.DataFrame(new_rows, columns=pandas_file.columns)
 
@@ -89,8 +93,12 @@ class NameListHandler:
         logging.info(f"Prepared DataFrame:\n{pandas_file}")
         return pandas_file
     
-    def append_into_preset(self, trimmed_df, workbook):
+    def append_into_preset(self, trimmed_df, preset_file, output_dir, output_filename):
         logging.info("In append to preset")
+
+        # Lade das bestehende Workbook
+        template_path = os.path.join('templates', preset_file)
+        workbook = openpyxl.load_workbook(template_path, keep_vba=True)
 
         # Wähle den Tab "SR Lt. AM"
         sheet = workbook['SR Lt. AM']
@@ -125,9 +133,14 @@ class NameListHandler:
         # Aufgabe 3: Einträge aus Spalte H in die innere Tabelle einfügen
         unique_entries = sorted(set(trimmed_df['F'].astype(str)))
         
+        
         for i, entry in enumerate(unique_entries):
             if i < 6:  # Für die ersten 6 Einträge
                 sheet.cell(row=i+3, column=11).value = entry
+            else:  # Für zusätzliche Einträge
+                # sheet.insert_rows(8)  # Füge eine neue Zeile vor Zeile 9 ein
+                # sheet.cell(row=8, column=11).value = entry
+                None
         
         # Suche nach "Gesamt" in Spalte K ab Zeile 10
         for row in range(10, sheet.max_row + 1):
@@ -138,57 +151,25 @@ class NameListHandler:
                 break
         
         # Färbe Zellen von Spalte L bis AD ein, wenn sie nicht "0" sind
-        fill = PatternFill(start_color="CCFFCC", end_color="CCFFCC", fill_type="solid")  # Hellgrün
+        fill = PatternFill(start_color="FFFF00", end_color="FFFF00", fill_type="solid")  # Gelbe Füllung
         for row in range(12, last_data_row + 1):
             for col in range(12, 30):  # L = 12, AD = 30
                 cell = sheet.cell(row=row, column=col)
-                col_letter = get_column_letter(col)
-                
-                # Überprüfe den Zellinhalt
-                cell_value = cell.value
-                
-                if cell.data_type == 'f':
-                    # Wenn es eine Formel ist, überprüfen wir, ob sie zu einem Wert ungleich "0" oder 0 ausgewertet wird
-                    try:
-                        if cell_value is not None and cell_value != '0' and cell_value != 0:
-                            cell.fill = fill
-                        else:
-                            cell.fill = PatternFill(fill_type=None)
-                    except:
-                        # Wenn die Auswertung fehlschlägt, überspringen wir die Zelle
-                        continue
-                else:
-                    # Wenn es keine Formel ist, färben wir die Zelle ein, wenn der Wert nicht "0" oder 0 ist
-                    if cell_value is not None and cell_value != '0' and cell_value != 0:
-                        cell.fill = fill
-                    else:
-                        cell.fill = PatternFill(fill_type=None)
+                if cell.data_type == 'f':  # Wenn es eine Formel ist
+                    cell.value = f'=IF({cell.value}="0","0",{cell.value})'  # Umschließe die originale Formel
+                if cell.value != "0":
+                    cell.fill = fill
 
-        return workbook
+        # Speicher das Workbook an den angegebenen Speicherort
+        output_path = os.path.join(output_dir, output_filename)
+        workbook.save(output_path)
+        logging.info(f"Workbook saved to {output_path}")
+        
+name_list_handler = NameListHandler()
+input_file = 'path_to_input_file.csv'
+preset_file = 'path_to_preset_file.xlsm'
+output_dir = 'path_to_output_directory'
 
-    def process_template(self, template_filled, input_namelist, checkset):
-        try:
-            prepared_table = self.prepare_table(input_namelist)
-            if prepared_table is None:
-                raise ValueError("Failed to prepare name list table.")
-            
-            fully_filled_template = self.append_into_preset(prepared_table, template_filled)
-            if fully_filled_template is None:
-                raise ValueError("Failed to append prepared table into template.")
-            
-            return fully_filled_template
-        except Exception as e:
-            logging.error(f"Error in process_template: {e}")
-            return None
-
-# Verwendung der NameListHandler-Klasse
-if __name__ == "__main__":
-    name_list_handler = NameListHandler()
-    input_file = 'path_to_input_file.csv'
-    template_filled = openpyxl.load_workbook('path_to_template_filled.xlsm', keep_vba=True)
-    
-    fully_filled_template = name_list_handler.process_template(template_filled, input_file, True)
-    if fully_filled_template:
-        print("Template processed successfully.")
-    else:
-        print("Failed to process template.")
+trimmed_df = name_list_handler.prepare_table(input_file)
+if trimmed_df is not None:
+    name_list_handler.append_into_preset(trimmed_df, preset_file, output_dir)

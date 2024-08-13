@@ -2,9 +2,11 @@ import pandas as pd
 import os
 import logging
 from openpyxl import load_workbook
-from openpyxl.styles import Border, Side, Font, PatternFill
+from openpyxl.styles import Border, Side
 import chardet
 import locale
+from openpyxl.styles import Font, PatternFill
+
 
 class FileHandler:
     def __init__(self):
@@ -53,7 +55,7 @@ class FileHandler:
             logging.error(f"An error occurred: {e}")
             return None
 
-    def append_trimmed_to_existing(self, trimmed_df, preset_file):
+    def append_trimmed_to_existing(self, trimmed_df, preset_file, output_dir, output_filename):
         try:
             if trimmed_df is None or trimmed_df.empty:
                 raise ValueError("Trimmed DataFrame is empty.")
@@ -73,6 +75,7 @@ class FileHandler:
                     col_letter = chr(65 + c_idx)
                     if col_letter in number_columns and pd.notna(value):
                         try:
+                            # Entferne Tausendertrennzeichen und ersetze Komma durch Punkt
                             numeric_string = str(value).replace('.', '').replace(',', '.')
                             numeric_value = float(numeric_string)
                             cell = ws.cell(row=r_idx, column=c_idx + 1, value=numeric_value)
@@ -137,37 +140,20 @@ class FileHandler:
             # Neue Berechnung neben "Diff"
             ws.cell(row=last_row+4, column=8, value=f"=I{last_row}-H{last_row}")
 
-            logging.info(f"Successfully appended trimmed data to worksheet 'Prüf'")
-            return wb
+
+            output_file = os.path.join(output_dir, output_filename)
+
+            wb.save(output_file)
+            logging.info(f"Successfully appended trimmed data to {output_file} in worksheet 'Prüf'")
         except Exception as e:
             logging.error(f"An error occurred: {e}")
-            return None
-
-    def process_report(self, input_report):
-        try:
-            trimmed_df = self.copy_and_trim_file(input_report)
-            if trimmed_df is None:
-                raise ValueError("Failed to trim input report.")
-            
-            # Set the correct path to the template file
-            current_dir = os.path.dirname(os.path.abspath(__file__))
-            preset_file = os.path.join(current_dir, "templates", "template.xlsm")
-            
-            template_filled = self.append_trimmed_to_existing(trimmed_df, preset_file)
-            if template_filled is None:
-                raise ValueError("Failed to append trimmed data to template.")
-            
-            return template_filled
-        except Exception as e:
-            logging.error(f"Error in process_report: {e}")
-            return None
 
 # Verwendung der FileHandler-Klasse
-if __name__ == "__main__":
-    file_handler = FileHandler()
-    input_file = 'path_to_input_file.csv'
-    template_filled = file_handler.process_report(input_file)
-    if template_filled:
-        print("Report processed successfully.")
-    else:
-        print("Failed to process report.")
+file_handler = FileHandler()
+input_file = 'path_to_input_file.csv'
+preset_file = 'path_to_preset_file.xlsm'
+output_dir = 'path_to_output_directory'
+
+trimmed_df = file_handler.copy_and_trim_file(input_file)
+if trimmed_df is not None:
+    file_handler.append_trimmed_to_existing(trimmed_df, preset_file, output_dir)

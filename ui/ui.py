@@ -46,9 +46,15 @@ class ApplicationUI:
         except Exception as e:
             print(f"Could not set DPI awareness: {e}")
 
+    # def change_font_size(self, event):
+    #     self.font_size = int(float(self.settings_tab.font_size_scale.get()))
+    #     reapply_styles(self.style, self.font_size)
+    #     #self.fill_preset_tab.update_widgets(self.font_size)  # Update widgets to apply new font size
+    #     self.pruefung_tab.create_widgets()  # Recreate widgets to apply new font size
+    #     self.settings_tab.update_widgets(self.font_size)  # Update widgets to apply new font size
+
     def change_font_size(self, event):
         self.font_size = int(float(self.settings_tab.font_size_scale.get()))
         reapply_styles(self.style, self.font_size)
-        #self.fill_preset_tab.update_widgets(self.font_size)  # Update widgets to apply new font size
-        self.pruefung_tab.create_widgets()  # Recreate widgets to apply new font size
+        self.pruefung_tab.update_widgets(self.font_size)  # Update widgets to apply new font size
         self.settings_tab.update_widgets(self.font_size)  # Update widgets to apply new font size
