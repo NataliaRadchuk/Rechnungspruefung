@@ -137,33 +137,20 @@ class NameListHandler:
                 sheet.cell(row=row, column=12).number_format = 'DD.MM.YYYY'
                 break
         
-        # Färbe Zellen von Spalte L bis AD ein, wenn sie nicht "0" sind
+        # Färbe Zellen von Spalte L bis AD ein, wenn sie einen sichtbaren Wert haben
         fill = PatternFill(start_color="CCFFCC", end_color="CCFFCC", fill_type="solid")  # Hellgrün
         for row in range(12, last_data_row + 1):
             for col in range(12, 30):  # L = 12, AD = 30
                 cell = sheet.cell(row=row, column=col)
-                col_letter = get_column_letter(col)
                 
-                # Überprüfe den Zellinhalt
-                cell_value = cell.value
-                
-                if cell.data_type == 'f':
-                    # Wenn es eine Formel ist, überprüfen wir, ob sie zu einem Wert ungleich "0" oder 0 ausgewertet wird
-                    try:
-                        if cell_value is not None and cell_value != '0' and cell_value != 0:
-                            cell.fill = fill
-                        else:
-                            cell.fill = PatternFill(fill_type=None)
-                    except:
-                        # Wenn die Auswertung fehlschlägt, überspringen wir die Zelle
-                        continue
-                else:
-                    # Wenn es keine Formel ist, färben wir die Zelle ein, wenn der Wert nicht "0" oder 0 ist
-                    if cell_value is not None and cell_value != '0' and cell_value != 0:
-                        cell.fill = fill
-                    else:
-                        cell.fill = PatternFill(fill_type=None)
+                # Verwende den angezeigten Wert statt des tatsächlichen Zellwerts
+                displayed_value = cell.value
 
+                # Überprüfe, ob der angezeigte Wert leer oder "Falsch" ist
+                if displayed_value is not None and displayed_value != "" and displayed_value != "Falsch":
+                    cell.fill = fill
+                else:
+                    cell.fill = PatternFill(fill_type=None)
         return workbook
 
     def process_template(self, template_filled, input_namelist, checkset):
