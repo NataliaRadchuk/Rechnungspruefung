@@ -1,8 +1,11 @@
 import tkinter as tk
-from tkinter import filedialog, messagebox
+from tkinter import filedialog, messagebox, scrolledtext
 from ttkbootstrap import ttk
 from pruefung_handler import PruefungHandler
 import os
+import threading
+import logging
+from .gui_log_handler import GUILogHandler
 
 class PruefungTab:
     def __init__(self, notebook, style):
@@ -12,6 +15,22 @@ class PruefungTab:
         notebook.add(self.frame, text="Prüfung")
         self.create_widgets()
         self.file_ops = PruefungHandler()
+        self.setup_logger()
+
+    def setup_logger(self):
+        logger = logging.getLogger()
+        logger.setLevel(logging.INFO)
+        
+        # Entfernen Sie alle bestehenden Handler
+        for handler in logger.handlers[:]:
+            logger.removeHandler(handler)
+        
+        # Fügen Sie den benutzerdefinierten GUI-Handler hinzu
+        gui_handler = GUILogHandler(self.update_log)
+        gui_handler.setLevel(logging.INFO)
+        formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+        gui_handler.setFormatter(formatter)
+        logger.addHandler(gui_handler)
 
     def create_widgets(self):
         self.frame.columnconfigure(1, weight=1)
@@ -53,9 +72,10 @@ class PruefungTab:
         self.process_button = ttk.Button(self.frame, text="Start", command=self.start_process)
         self.process_button.grid(row=5, column=0, columnspan=3, pady=20)
 
-        # Status Label
-        self.status_label = ttk.Label(self.frame, text="", font=self.font_large)
-        self.status_label.grid(row=6, column=0, columnspan=3, pady=10)
+        # Aufgabe 2: Log-Textfeld
+        self.log_text = scrolledtext.ScrolledText(self.frame, height=10, width=70, font=self.font_large)
+        self.log_text.grid(row=6, column=0, columnspan=3, pady=10)
+        self.log_text.config(state=tk.DISABLED)  # Macht das Textfeld schreibgeschützt
 
     def select_input_file(self):
         file_path = filedialog.askopenfilename(filetypes=[("Excel and CSV files", "*.xlsx;*.xls;*.xlsm;*.csv")])
@@ -73,6 +93,14 @@ class PruefungTab:
         self.output_dir_entry.insert(0, dir_path)
 
     def start_process(self):
+        # Aufgabe 1: Deaktiviere den Start-Button
+        self.process_button.config(state=tk.DISABLED)
+
+        # Lösche vorherige Log-Einträge
+        self.log_text.config(state=tk.NORMAL)
+        self.log_text.delete(1.0, tk.END)
+        self.log_text.config(state=tk.DISABLED)
+
         input_file = self.input_entry.get()
         namensliste_file = self.namensliste_entry.get()
         output_dir = self.output_dir_entry.get()
@@ -81,6 +109,7 @@ class PruefungTab:
 
         if not output_filename:
             messagebox.showerror("Input Error", "Please enter an output filename.")
+            self.process_button.config(state=tk.NORMAL)  # Reaktiviere den Button bei Fehler
             return
 
         if not output_filename.endswith('.xlsm'):
@@ -91,21 +120,38 @@ class PruefungTab:
 
         if not input_file or not namensliste_file or not output_dir or not output_filename:
             messagebox.showerror("Input Error", "Please select all required files, output directory, and provide an output filename.")
+            self.process_button.config(state=tk.NORMAL)  # Reaktiviere den Button bei Fehler
             return
 
         if not os.path.exists(preset_file):
             messagebox.showerror("File Error", f"Template file not found: {preset_file}")
+            self.process_button.config(state=tk.NORMAL)  # Reaktiviere den Button bei Fehler
             return
 
+        # Starte den Verarbeitungsprozess in einem separaten Thread
+        threading.Thread(target=self.process_files, args=(input_file, namensliste_file, option_aktiviert, output_dir, output_filename)).start()
+
+    def process_files(self, input_file, namensliste_file, option_aktiviert, output_dir, output_filename):
         try:
-            # prepared_table = self.file_ops.prepare_table(input_file)
-            # self.file_ops.append_into_preset(prepared_table, preset_file, output_dir, output_filename)
-            
-            self.file_ops.process_files(input_file, namensliste_file, option_aktiviert, output_dir, output_filename)
-            self.status_label.config(text="Process completed successfully.", foreground="green")
+            success, message = self.file_ops.process_files(input_file, namensliste_file, option_aktiviert, output_dir, output_filename)
+            if success:
+                self.update_log("Process completed successfully.")
+            else:
+                self.update_log(f"An error occurred: {message}")
         except Exception as e:
-            messagebox.showerror("Processing Error", str(e))
-            self.status_label.config(text="An error occurred during processing.", foreground="red")
+            self.update_log(f"An error occurred: {str(e)}")
+        finally:
+            # Aufgabe 1: Reaktiviere den Start-Button nach Abschluss der Verarbeitung
+            self.frame.after(0, lambda: self.process_button.config(state=tk.NORMAL))
+
+    def update_log(self, message):
+        # Aufgabe 2: Aktualisiere das Log-Textfeld
+        def update():
+            self.log_text.config(state=tk.NORMAL)
+            self.log_text.insert(tk.END, message + "\n")
+            self.log_text.see(tk.END)
+            self.log_text.config(state=tk.DISABLED)
+        self.frame.after(0, update)
 
     def update_widgets(self, font_size):
         self.font_size = font_size
@@ -117,6 +163,8 @@ class PruefungTab:
                 widget.configure(font=self.font_large)
             elif isinstance(widget, ttk.Checkbutton):
                 widget.configure(style='TCheckbutton')
+            elif isinstance(widget, scrolledtext.ScrolledText):
+                widget.configure(font=self.font_large)
 
         self.style.configure('TButton', font=self.font_large)
         self.style.configure('TCheckbutton', font=self.font_large)

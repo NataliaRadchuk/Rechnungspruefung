@@ -1,10 +1,10 @@
 import tkinter as tk
 from ttkbootstrap import Style, ttk
-from .merge_columns_ui import MergeColumnsTab
+#from .merge_columns_ui import MergeColumnsTab
 from .settings_ui import SettingsTab
-from .fill_preset_ui import FillPresetTab
+#from .fill_preset_ui import FillPresetTab
 from.pruefung_ui import PruefungTab
-from .name_list_ui import NameListTab
+#from .name_list_ui import NameListTab
 from .styles import apply_styles, reapply_styles
 
 class ApplicationUI:
@@ -25,13 +25,13 @@ class ApplicationUI:
 
         self.pruefung_tab = PruefungTab(self.notebook, style)
         #self.fill_preset_tab = FillPresetTab(self.notebook, style)
-        self.name_list_tab = NameListTab(self.notebook, style)
+        #self.name_list_tab = NameListTab(self.notebook, style)
         #self.merge_tab = MergeColumnsTab(self.notebook, style)
         self.settings_tab = SettingsTab(self.notebook, style)
 
         self.notebook.add(self.pruefung_tab.frame, text='Excel Füllung')
         #self.notebook.add(self.fill_preset_tab.frame, text='Fill Preset')
-        self.notebook.add(self.name_list_tab.frame, text='Name list')
+        #self.notebook.add(self.name_list_tab.frame, text='Name list')
         #self.notebook.add(self.merge_tab.frame, text='Merge Columns')
         self.notebook.add(self.settings_tab.frame, text='Einstellungen')
 

@@ -7,11 +7,13 @@ class PruefungHandler:
     def __init__(self):
         self.file_handler = FileHandler()
         self.name_list_handler = NameListHandler()
+        self.logger = logging.getLogger(__name__)
 
     def process_files(self, input_report, input_namelist, checkset, output_dir, output_filename):
         try:
             # Schritt 1: Verarbeite den Input-Report mit FileHandler
             logging.info(f"Schritt 1 start")
+            self.logger.info("Schritt 1 start")
             template_filled = self.file_handler.process_report(input_report)
             logging.info(f"Schritt 1 Ende und Schritt 2 Anfang")
 
