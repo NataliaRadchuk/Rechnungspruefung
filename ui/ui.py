@@ -1,10 +1,7 @@
 import tkinter as tk
 from ttkbootstrap import Style, ttk
-#from .merge_columns_ui import MergeColumnsTab
 from .settings_ui import SettingsTab
-#from .fill_preset_ui import FillPresetTab
-from.pruefung_ui import PruefungTab
-#from .name_list_ui import NameListTab
+from .pruefung_ui import PruefungTab
 from .styles import apply_styles, reapply_styles
 
 class ApplicationUI:
@@ -24,20 +21,19 @@ class ApplicationUI:
         self.notebook.pack(fill='both', expand=True)
 
         self.pruefung_tab = PruefungTab(self.notebook, style)
-        #self.fill_preset_tab = FillPresetTab(self.notebook, style)
-        #self.name_list_tab = NameListTab(self.notebook, style)
-        #self.merge_tab = MergeColumnsTab(self.notebook, style)
         self.settings_tab = SettingsTab(self.notebook, style)
 
         self.notebook.add(self.pruefung_tab.frame, text='Excel Füllung')
-        #self.notebook.add(self.fill_preset_tab.frame, text='Fill Preset')
-        #self.notebook.add(self.name_list_tab.frame, text='Name list')
-        #self.notebook.add(self.merge_tab.frame, text='Merge Columns')
         self.notebook.add(self.settings_tab.frame, text='Einstellungen')
 
-        self.settings_tab.font_size_scale.config(command=self.change_font_size)  # Bind change_font_size to scale
+        # Stellen Sie sicher, dass settings_tab initialisiert ist, bevor Sie es verwenden
+        if hasattr(self.settings_tab, 'font_size_scale'):
+            self.settings_tab.font_size_scale.config(command=self.change_font_size)
+        else:
+            print("Warnung: font_size_scale nicht in settings_tab gefunden")
 
         self.change_font_size(None)
+        self.adjust_window_size()
 
     def set_dpi_awareness(self):
         try:
@@ -46,15 +42,18 @@ class ApplicationUI:
         except Exception as e:
             print(f"Could not set DPI awareness: {e}")
 
-    # def change_font_size(self, event):
-    #     self.font_size = int(float(self.settings_tab.font_size_scale.get()))
-    #     reapply_styles(self.style, self.font_size)
-    #     #self.fill_preset_tab.update_widgets(self.font_size)  # Update widgets to apply new font size
-    #     self.pruefung_tab.create_widgets()  # Recreate widgets to apply new font size
-    #     self.settings_tab.update_widgets(self.font_size)  # Update widgets to apply new font size
-
     def change_font_size(self, event):
-        self.font_size = int(float(self.settings_tab.font_size_scale.get()))
-        reapply_styles(self.style, self.font_size)
-        self.pruefung_tab.update_widgets(self.font_size)  # Update widgets to apply new font size
-        self.settings_tab.update_widgets(self.font_size)  # Update widgets to apply new font size
+        if hasattr(self.settings_tab, 'font_size_scale'):
+            self.font_size = int(float(self.settings_tab.font_size_scale.get()))
+            reapply_styles(self.style, self.font_size)
+            self.pruefung_tab.update_widgets(self.font_size)
+            self.settings_tab.update_widgets(self.font_size)
+            self.adjust_window_size()
+        else:
+            print("Warnung: font_size_scale nicht in settings_tab gefunden")
+
+    def adjust_window_size(self):
+        self.master.update_idletasks()
+        width = self.master.winfo_reqwidth()
+        height = self.master.winfo_reqheight()
+        self.master.geometry(f"{width}x{height}")

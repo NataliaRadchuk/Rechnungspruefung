@@ -3,7 +3,7 @@ from ttkbootstrap import Style
 from ui.styles import apply_styles
 
 def main():
-    style = Style(theme='cosmo')  # Default theme
+    style = Style(theme='united')  # Default theme
     root = style.master
     apply_styles(style)
     app = ApplicationUI(root, style)

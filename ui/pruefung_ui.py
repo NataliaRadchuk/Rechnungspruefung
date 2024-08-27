@@ -72,10 +72,14 @@ class PruefungTab:
         self.process_button = ttk.Button(self.frame, text="Start", command=self.start_process)
         self.process_button.grid(row=5, column=0, columnspan=3, pady=20)
 
-        # Aufgabe 2: Log-Textfeld
+        # Log-Textfeld
         self.log_text = scrolledtext.ScrolledText(self.frame, height=10, width=70, font=self.font_large)
         self.log_text.grid(row=6, column=0, columnspan=3, pady=10)
         self.log_text.config(state=tk.DISABLED)  # Macht das Textfeld schreibgeschützt
+        self.frame.grid_rowconfigure(6, weight=1)
+        self.frame.grid_columnconfigure(0, weight=1)
+        self.frame.grid_columnconfigure(1, weight=1)
+        self.frame.grid_columnconfigure(2, weight=1)
 
     def select_input_file(self):
         file_path = filedialog.askopenfilename(filetypes=[("Excel and CSV files", "*.xlsx;*.xls;*.xlsm;*.csv")])

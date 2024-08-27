@@ -13,7 +13,6 @@ class PruefungHandler:
         try:
             # Schritt 1: Verarbeite den Input-Report mit FileHandler
             logging.info(f"Schritt 1 start")
-            self.logger.info("Schritt 1 start")
             template_filled = self.file_handler.process_report(input_report)
             logging.info(f"Schritt 1 Ende und Schritt 2 Anfang")
 
