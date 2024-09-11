@@ -138,19 +138,19 @@ class NameListHandler:
                 break
         
         # Färbe Zellen von Spalte L bis AD ein, wenn sie einen sichtbaren Wert haben
-        fill = PatternFill(start_color="CCFFCC", end_color="CCFFCC", fill_type="solid")  # Hellgrün
-        for row in range(12, last_data_row + 1):
-            for col in range(12, 30):  # L = 12, AD = 30
-                cell = sheet.cell(row=row, column=col)
+        # fill = PatternFill(start_color="CCFFCC", end_color="CCFFCC", fill_type="solid")  # Hellgrün
+        # for row in range(12, last_data_row + 1):
+        #     for col in range(12, 30):  # L = 12, AD = 30
+        #         cell = sheet.cell(row=row, column=col)
                 
-                # Verwende den angezeigten Wert statt des tatsächlichen Zellwerts
-                displayed_value = cell.value
+        #         # Verwende den angezeigten Wert statt des tatsächlichen Zellwerts
+        #         displayed_value = cell.value
 
-                # Überprüfe, ob der angezeigte Wert leer oder "Falsch" ist
-                if displayed_value is not None and displayed_value != "" and displayed_value != "Falsch":
-                    cell.fill = fill
-                else:
-                    cell.fill = PatternFill(fill_type=None)
+        #         # Überprüfe, ob der angezeigte Wert leer oder "Falsch" ist
+        #         if displayed_value is not None and displayed_value != "" and displayed_value != "Falsch":
+        #             cell.fill = fill
+        #         else:
+        #             cell.fill = PatternFill(fill_type=None)
         return workbook
 
     def process_template(self, template_filled, input_namelist, checkset):
