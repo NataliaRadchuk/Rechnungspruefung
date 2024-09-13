@@ -52,7 +52,7 @@ class PruefungTab:
 
         # Checkbox
         self.checkbox_var = tk.BooleanVar()
-        self.checkbox = ttk.Checkbutton(self.frame, text="Namensliste NICHT aus Tableau", variable=self.checkbox_var)
+        self.checkbox = ttk.Checkbutton(self.frame, text="Namensliste NICHT aus Tableau", variable=self.checkbox_var, command=self.toggle_namensliste)  # Aufgabe Checkbox
         self.checkbox.grid(row=2, column=0, columnspan=3, padx=10, pady=10, sticky=tk.W)
 
         # Output Directory
@@ -80,6 +80,15 @@ class PruefungTab:
         self.frame.grid_columnconfigure(0, weight=1)
         self.frame.grid_columnconfigure(1, weight=1)
         self.frame.grid_columnconfigure(2, weight=1)
+
+    # Aufgabe Checkbox: Diese Methode steuert das Aktivieren/Deaktivieren der Namensliste-Eingabefelder
+    def toggle_namensliste(self):
+        if self.checkbox_var.get():
+            self.namensliste_entry.config(state=tk.DISABLED)
+            self.namensliste_button.config(state=tk.DISABLED)
+        else:
+            self.namensliste_entry.config(state=tk.NORMAL)
+            self.namensliste_button.config(state=tk.NORMAL)
 
     def select_input_file(self):
         file_path = filedialog.askopenfilename(filetypes=[("Excel and CSV files", "*.xlsx;*.xls;*.xlsm;*.csv")])
@@ -111,6 +120,12 @@ class PruefungTab:
         output_filename = self.output_filename_entry.get()
         option_aktiviert = self.checkbox_var.get()
 
+        # Aufgabe Checkbox: Überprüfe, ob die Namensliste benötigt wird
+        if not option_aktiviert and not namensliste_file:
+            messagebox.showerror("Input Error", "Please select a Namensliste file.")
+            self.process_button.config(state=tk.NORMAL)  # Reaktiviere den Button bei Fehler
+            return
+
         if not output_filename:
             messagebox.showerror("Input Error", "Please enter an output filename.")
             self.process_button.config(state=tk.NORMAL)  # Reaktiviere den Button bei Fehler
@@ -122,7 +137,7 @@ class PruefungTab:
         current_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         preset_file = os.path.join(current_dir, "templates", "template.xlsm")
 
-        if not input_file or not namensliste_file or not output_dir or not output_filename:
+        if not input_file or not output_dir or not output_filename:
             messagebox.showerror("Input Error", "Please select all required files, output directory, and provide an output filename.")
             self.process_button.config(state=tk.NORMAL)  # Reaktiviere den Button bei Fehler
             return
@@ -139,7 +154,7 @@ class PruefungTab:
         try:
             success, message = self.file_ops.process_files(input_file, namensliste_file, option_aktiviert, output_dir, output_filename)
             if success:
-                self.update_log("Process completed successfully.")
+                self.update_log("Vorgang erfolgreich abgeschlossen.")
             else:
                 self.update_log(f"An error occurred: {message}")
         except Exception as e:

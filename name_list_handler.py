@@ -83,7 +83,7 @@ class NameListHandler:
         copied_df['F'] = copied_df['F'].astype(str) + '-F'
         pandas_file = pd.concat([pandas_file, copied_df], ignore_index=True)
 
-        # Alphabetisch sortieren nach Spalte F
+        # Alphabetisch sortieren nach Spalte C
         pandas_file = pandas_file.sort_values(by='C')
 
         logging.info(f"Prepared DataFrame:\n{pandas_file}")
@@ -95,20 +95,31 @@ class NameListHandler:
         # Wähle den Tab "SR Lt. AM"
         sheet = workbook['SR Lt. AM']
 
-        # Füge trimmed_df ab Zeile 12, Spalte A ein
-        last_data_row = 11  # Initialisiere mit der Zeile vor den Daten
-        for r, row in enumerate(dataframe_to_rows(trimmed_df, index=False, header=False), start=12):
-            for c, value in enumerate(row, start=1):
-                cell = sheet.cell(row=r, column=c)
+        # Aufgabe A: Füge trimmed_df ab Zeile 18, Spalte A ein
+        last_data_row = 17  # Initialisiere mit der Zeile vor den Daten
+        for r, row in enumerate(dataframe_to_rows(trimmed_df, index=False, header=False), start=18):
+            # Fülle die ersten drei Spalten (A, B, C)
+            for c in range(3):
+                cell = sheet.cell(row=r, column=c+1)
+                value = row[c] if c < len(row) else ''
                 if isinstance(value, (int, float)):
                     cell.value = value
                 else:
                     cell.value = str(value)
-            # Füge die Formel in Spalte I ein
-            sheet.cell(row=r, column=9).value = f'=E{r}-D{r}'
+
+            for c in range(3, len(row)):
+                cell = sheet.cell(row=r, column=c+6)  # +6 weil wir 5 Spalten übersprungen haben
+                value = row[c]
+                if isinstance(value, (int, float)):
+                    cell.value = value
+                else:
+                    cell.value = str(value)
+                    
+            # Füge die Formel in Spalte N ein (ehemals Spalte I)
+            sheet.cell(row=r, column=14).value = f'=J{r}-I{r}'
             last_data_row = r  # Aktualisiere die letzte Datenzeile
 
-        # Konvertiere Spalte D und E in Datumsformat
+        # Konvertiere Spalte I und J in Datumsformat (ehemals D und E)
         def convert_to_date(cell):
             if cell.value:
                 try:
@@ -118,41 +129,27 @@ class NameListHandler:
                 except ValueError:
                     logging.warning(f"Konnte Datum in Zelle {cell.coordinate} nicht konvertieren: {cell.value}")
 
-        for col in [4, 5]:  # 4 für Spalte D, 5 für Spalte E
-            for row in range(12, last_data_row + 1):
+        for col in [9, 10]:  # 9 für Spalte I, 10 für Spalte J
+            for row in range(18, last_data_row + 1):
                 convert_to_date(sheet.cell(row=row, column=col))
         
-        # Aufgabe 3: Einträge aus Spalte H in die innere Tabelle einfügen
+        # Aufgabe 3: Einträge aus Spalte F in die innere Tabelle einfügen
         unique_entries = sorted(set(trimmed_df['F'].astype(str)))
         
         for i, entry in enumerate(unique_entries):
             if i < 6:  # Für die ersten 6 Einträge
-                sheet.cell(row=i+3, column=11).value = entry
+                sheet.cell(row=i+3, column=16).value = entry  # Spalte P ist die neue Spalte K
         
-        # Suche nach "Gesamt" in Spalte K ab Zeile 10
+        # Suche nach "Gesamt" in Spalte P ab Zeile 10 (ehemals Spalte K)
         for row in range(10, sheet.max_row + 1):
-            if sheet.cell(row=row, column=11).value == "Gesamt":
+            if sheet.cell(row=row, column=16).value == "Gesamt":
                 # Passe die Formel an, um nur den Bereich mit Daten zu berücksichtigen
-                sheet.cell(row=row, column=12).value = f'=MIN(D12:D{last_data_row})-2'
-                sheet.cell(row=row, column=12).number_format = 'DD.MM.YYYY'
+                sheet.cell(row=row, column=17).value = f'=MIN(I18:I{last_data_row})-2'  # Spalte I ist die neue Spalte D
+                sheet.cell(row=row, column=17).number_format = 'DD.MM.YYYY'
                 break
-        
-        # Färbe Zellen von Spalte L bis AD ein, wenn sie einen sichtbaren Wert haben
-        # fill = PatternFill(start_color="CCFFCC", end_color="CCFFCC", fill_type="solid")  # Hellgrün
-        # for row in range(12, last_data_row + 1):
-        #     for col in range(12, 30):  # L = 12, AD = 30
-        #         cell = sheet.cell(row=row, column=col)
-                
-        #         # Verwende den angezeigten Wert statt des tatsächlichen Zellwerts
-        #         displayed_value = cell.value
-
-        #         # Überprüfe, ob der angezeigte Wert leer oder "Falsch" ist
-        #         if displayed_value is not None and displayed_value != "" and displayed_value != "Falsch":
-        #             cell.fill = fill
-        #         else:
-        #             cell.fill = PatternFill(fill_type=None)
+    
         return workbook
-
+    
     def process_template(self, template_filled, input_namelist, checkset):
         try:
             prepared_table = self.prepare_table(input_namelist)
@@ -177,5 +174,6 @@ if __name__ == "__main__":
     fully_filled_template = name_list_handler.process_template(template_filled, input_file, True)
     if fully_filled_template:
         print("Template processed successfully.")
+        fully_filled_template.save('path_to_output_file.xlsm')
     else:
         print("Failed to process template.")

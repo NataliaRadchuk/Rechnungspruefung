@@ -53,6 +53,27 @@ class FileHandler:
             logging.error(f"An error occurred: {e}")
             return None
 
+    def process_cell(self, ws, row, col, value, col_letter, integer_columns, number_columns):
+        if col_letter in integer_columns and pd.notna(value):
+            try:
+                integer_value = int(float(str(value).replace(',', '.')))
+                cell = ws.cell(row=row, column=col + 1, value=integer_value)
+                cell.number_format = '0'
+            except ValueError:
+                logging.warning(f"Could not convert '{value}' to integer in column {col_letter}. Inserting as text.")
+                cell = ws.cell(row=row, column=col + 1, value=value)
+        elif col_letter in number_columns and pd.notna(value):
+            try:
+                numeric_string = str(value).replace('.', '').replace(',', '.')
+                numeric_value = float(numeric_string)
+                cell = ws.cell(row=row, column=col + 1, value=numeric_value)
+                cell.number_format = '#,##0.00'
+            except ValueError:
+                logging.warning(f"Could not convert '{value}' to float. Inserting as text.")
+                cell = ws.cell(row=row, column=col + 1, value=value)
+        else:
+            cell = ws.cell(row=row, column=col + 1, value=value)
+
     def append_trimmed_to_existing(self, trimmed_df, preset_file):
         try:
             if trimmed_df is None or trimmed_df.empty:
@@ -66,24 +87,16 @@ class FileHandler:
 
             start_row = next((row for row, cells in enumerate(ws.iter_rows(min_row=2, max_row=ws.max_row, values_only=True), start=2) if all(cell is None for cell in cells)), ws.max_row + 1)
 
-            number_columns = {'E', 'F', 'G', 'H', 'I', 'J'}
+            number_columns = {'F', 'G', 'H', 'I', 'J'}
+            integer_columns = {'A', 'E'}
 
+            # Verarbeitung der Hauptdaten
             for r_idx, row in enumerate(trimmed_df.itertuples(index=False), start=start_row):
                 for c_idx, value in enumerate(row):
                     col_letter = chr(65 + c_idx)
-                    if col_letter in number_columns and pd.notna(value):
-                        try:
-                            numeric_string = str(value).replace('.', '').replace(',', '.')
-                            numeric_value = float(numeric_string)
-                            cell = ws.cell(row=r_idx, column=c_idx + 1, value=numeric_value)
-                            cell.number_format = '#,##0.00'
-                        except ValueError:
-                            logging.warning(f"Could not convert '{value}' to float. Inserting as text.")
-                            cell = ws.cell(row=r_idx, column=c_idx + 1, value=value)
-                    else:
-                        cell = ws.cell(row=r_idx, column=c_idx + 1, value=value)
+                    self.process_cell(ws, r_idx, c_idx, value, col_letter, integer_columns, number_columns)
 
-            last_row = ws.max_row
+            last_row = start_row + len(trimmed_df) - 1
 
             # Verschieben der Zusammenfassungszeile
             for col_idx in range(1, ws.max_column + 1):
