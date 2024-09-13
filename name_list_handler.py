@@ -147,6 +147,36 @@ class NameListHandler:
                 sheet.cell(row=row, column=17).value = f'=MIN(I18:I{last_data_row})-2'  # Spalte I ist die neue Spalte D
                 sheet.cell(row=row, column=17).number_format = 'DD.MM.YYYY'
                 break
+
+        # Aufgabe 1: Füge "Ist" ein
+        ist_row = last_data_row + 2
+        sheet.cell(row=ist_row, column=15).value = "Ist"
+        
+        # Aufgabe 2: Berechne Summe/2 für Spalte N
+        sheet.cell(row=ist_row, column=14).value = f'=SUM(N18:N{last_data_row})/2'
+        
+        # Aufgabe 3: Berechne Summe für Spalte P
+        sheet.cell(row=ist_row, column=16).value = f'=SUM(P18:P{last_data_row})'
+        
+        # Aufgabe 4: Füge "Soll" ein
+        soll_row = ist_row + 2
+        sheet.cell(row=soll_row, column=15).value = "Soll"
+        
+        # Aufgabe 5: Übernehme Wert aus Tab "Prüf" Spalte E
+        sheet.cell(row=soll_row, column=14).value = '=INDEX(Prüf!E:E, MATCH(1E+99, Prüf!E:E))'
+        
+        # Aufgabe 6: Übernehme Wert aus Tab "Prüf" Spalte H
+        sheet.cell(row=soll_row, column=16).value = '=INDEX(Prüf!H:H, MATCH(1E+99, Prüf!H:H) - 6)'
+        
+        # Aufgabe 7: Füge "Diff" ein
+        diff_row = soll_row + 2
+        sheet.cell(row=diff_row, column=15).value = "Diff"
+        
+        # Aufgabe 8: Berechne Differenz für Spalte N
+        sheet.cell(row=diff_row, column=14).value = f'=N{ist_row}-N{soll_row}'
+        
+        # Aufgabe 9: Berechne Differenz für Spalte P
+        sheet.cell(row=diff_row, column=16).value = f'=P{ist_row}-P{soll_row}'
     
         return workbook
     
