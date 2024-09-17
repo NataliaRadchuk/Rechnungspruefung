@@ -26,8 +26,8 @@ class NameListHandler:
             logging.error("Failed to load or process the file, or the file is empty.")
             return None
 
-        logging.info("File loaded and trimmed successfully.")
-        logging.info(f"Trimmed DataFrame:\n{pandas_file}")
+        #logging.info("File loaded and trimmed successfully.")
+        #logging.info(f"Trimmed DataFrame:\n{pandas_file}")
 
         # Aufgabe 1: Letzte Spalte löschen, wenn sie nur leere Werte enthält
         if pandas_file.iloc[:, -1].astype(str).str.strip().eq('').all():
@@ -86,11 +86,11 @@ class NameListHandler:
         # Alphabetisch sortieren nach Spalte C
         pandas_file = pandas_file.sort_values(by='C')
 
-        logging.info(f"Prepared DataFrame:\n{pandas_file}")
+        #logging.info(f"Prepared DataFrame:\n{pandas_file}")
         return pandas_file
     
     def append_into_preset(self, trimmed_df, workbook):
-        logging.info("In append to preset")
+        #logging.info("Bearbeite 'SR Lt. AM - Tab'")
 
         # Wähle den Tab "SR Lt. AM"
         sheet = workbook['SR Lt. AM']
@@ -203,7 +203,8 @@ if __name__ == "__main__":
     
     fully_filled_template = name_list_handler.process_template(template_filled, input_file, True)
     if fully_filled_template:
-        print("Template processed successfully.")
+        #print("Template processed successfully.")
+        logging.info("Erfolgreich den 'SR Lt. AM - Tab' bearbeitet")
         fully_filled_template.save('path_to_output_file.xlsm')
     else:
         print("Failed to process template.")

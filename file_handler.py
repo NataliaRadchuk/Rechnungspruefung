@@ -21,7 +21,7 @@ class FileHandler:
         try:
             if file_extension == '.csv':
                 encoding = self.detect_encoding(file_path)
-                logging.info(f"Detected file encoding: {encoding}")
+                #logging.info(f"Detected file encoding: {encoding}")
                 
                 if encoding.lower() in ['utf-8', 'utf-8-sig', 'utf-16', 'utf-16-le', 'utf-16-be']:
                     if encoding.lower() in ['utf-8-sig', 'utf-8']:
@@ -31,7 +31,7 @@ class FileHandler:
                 else:
                     raise ValueError(f"Unsupported file encoding: {encoding}")
                 
-                logging.info(f"DataFrame head:\n{df.head()}")
+                #logging.info(f"DataFrame head:\n{df.head()}")
                 return df
             else:
                 raise ValueError("Unsupported file extension")
@@ -47,7 +47,7 @@ class FileHandler:
             
             # Nur die erste Spalte entfernen, aber alle Datenzeilen behalten
             trimmed_df = df.iloc[:, 1:]
-            logging.info(f"Trimmed DataFrame:\n{trimmed_df.head()}")
+            #logging.info(f"Trimmed DataFrame:\n{trimmed_df.head()}")
             return trimmed_df
         except Exception as e:
             logging.error(f"An error occurred: {e}")
@@ -112,6 +112,23 @@ class FileHandler:
             for col in ws[last_row]:
                 col.border = black_border
 
+            summary_row = last_row + 1
+            for col_idx in range(1, ws.max_column + 1):
+                cell = ws.cell(row=summary_row, column=col_idx)
+                if col_idx >= 6:  # Spalten F bis J
+                    cell.number_format = '#,##0.00'
+            
+            for row in ws.iter_rows(min_row=2, max_row=ws.max_row, min_col=8, max_col=8):
+                for cell in row:
+                    if cell.value is not None:
+                        cell.number_format = '#,##0.00'
+
+            # Formatierung der gesamten Spalte H als Kommazahl
+            for row in ws.iter_rows(min_row=2, max_row=ws.max_row, min_col=8, max_col=8):
+                for cell in row:
+                    if cell.value is not None:
+                        cell.number_format = '#,##0.00'
+
             # Neuer Code: Einfügen des spezifischen Inhalts
             last_row += 3  # Zwei Leerzeilen nach der letzten Zeile
 
@@ -119,7 +136,11 @@ class FileHandler:
             ws.cell(row=last_row, column=7, value="gebucht")
 
             # Kopieren des Inhalts der letzten Zeile in Spalte H
-            ws.cell(row=last_row, column=8, value=ws.cell(row=last_row-2, column=8).value)
+            #ws.cell(row=last_row, column=8, value=ws.cell(row=last_row-2, column=8).value)
+
+            h_cell = ws.cell(row=last_row, column=8)
+            h_cell.value = f'=H{last_row-2}'
+            h_cell.number_format = '#,##0.00'
 
             # Hinzufügen der Wörter in Spalte J und Berechnungen in Spalte I
             words = ["Hotelrechnung", "Rabatt", "Rechnung", "Depo", "Guthaben"]
@@ -148,9 +169,11 @@ class FileHandler:
             for col in range(7, 9):
                 ws.cell(row=last_row+4, column=col).fill = PatternFill(start_color="00FFFF00", end_color="00FFFF00", fill_type="solid")
             # Neue Berechnung neben "Diff"
-            ws.cell(row=last_row+4, column=8, value=f"=I{last_row}-H{last_row}")
+            #ws.cell(row=last_row+4, column=8, value=f"=I{last_row}-H{last_row}")
+            diff_calc_cell = ws.cell(row=last_row+4, column=8, value=f"=I{last_row}-H{last_row}")
+            diff_calc_cell.number_format = '#,##0.00'
 
-            logging.info(f"Successfully appended trimmed data to worksheet 'Prüf'")
+            logging.info(f"Erfolgreich den 'Prüf - Tab' bearbeitet")
             return wb
         except Exception as e:
             logging.error(f"An error occurred: {e}")

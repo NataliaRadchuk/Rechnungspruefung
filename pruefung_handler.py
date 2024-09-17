@@ -14,15 +14,15 @@ class PruefungHandler:
     def process_files(self, input_report, input_namelist, checkset, output_dir, output_filename):
         try:
             # Schritt 1: Verarbeite den Input-Report mit FileHandler
-            logging.info("Schritt 1 start")
+            logging.info("Bearbeite den 'Prüf - Tab'")
             template_filled = self.file_handler.process_report(input_report)
-            logging.info("Schritt 1 Ende")
+            # logging.info("Schritt 1 Ende")
 
             if not checkset:
                 # Schritt 2: Verarbeite das gefüllte Template mit NameListHandler
-                logging.info("Schritt 2 Anfang")
+                logging.info("Bearbeite den 'SR Lt. AM - Tab'")
                 fully_filled_template = self.name_list_handler.process_template(template_filled, input_namelist, checkset)
-                logging.info("Schritt 2 Ende")
+                #logging.info("Schritt 2 Ende")
             else:
                 fully_filled_template = template_filled
 
