@@ -1,6 +1,6 @@
 import pandas as pd
 import os
-import logging
+#import logging
 import chardet
 from datetime import datetime
 import locale
@@ -14,20 +14,20 @@ from openpyxl.utils import get_column_letter
 from file_handler import FileHandler 
 
 class NameListHandler:
-    def __init__(self):
-        logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+    def __init__(self, logger):
+        #logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
         locale.setlocale(locale.LC_NUMERIC, 'de_DE.UTF-8')  # Setze das deutsche Zahlenformat
-        self.file_ops = FileHandler()
+        self.file_ops = FileHandler(logger)
 
     def prepare_table(self, name_list_file):
         pandas_file = self.file_ops.copy_and_trim_file(name_list_file)
     
         if pandas_file is None or pandas_file.empty:
-            logging.error("Failed to load or process the file, or the file is empty.")
+            self.logger.info("Failed to load or process the file, or the file is empty.")
             return None
 
-        logging.info("File loaded and trimmed successfully.")
-        logging.info(f"Trimmed DataFrame:\n{pandas_file}")
+        self.logger.info("File loaded and trimmed successfully.")
+        self.logger.info(f"Trimmed DataFrame:\n{pandas_file}")
 
         # Aufgabe 1: Letzte Spalte löschen, wenn sie nur leere Werte enthält
         if pandas_file.iloc[:, -1].astype(str).str.strip().eq('').all():
@@ -86,11 +86,11 @@ class NameListHandler:
         # Alphabetisch sortieren nach Spalte C
         pandas_file = pandas_file.sort_values(by='C')
 
-        logging.info(f"Prepared DataFrame:\n{pandas_file}")
+        self.logger.info(f"Prepared DataFrame:\n{pandas_file}")
         return pandas_file
     
     def append_into_preset(self, trimmed_df, workbook):
-        logging.info("In append to preset")
+        self.logger.info("In append to preset")
 
         # Wähle den Tab "SR Lt. AM"
         sheet = workbook['SR Lt. AM']
@@ -127,7 +127,7 @@ class NameListHandler:
                     cell.value = date_value
                     cell.number_format = 'DD.MM.YYYY'
                 except ValueError:
-                    logging.warning(f"Konnte Datum in Zelle {cell.coordinate} nicht konvertieren: {cell.value}")
+                    self.logger.info(f"Konnte Datum in Zelle {cell.coordinate} nicht konvertieren: {cell.value}")
 
         for col in [9, 10]:  # 9 für Spalte I, 10 für Spalte J
             for row in range(18, last_data_row + 1):
@@ -192,7 +192,7 @@ class NameListHandler:
             
             return fully_filled_template
         except Exception as e:
-            logging.error(f"Error in process_template: {e}")
+            self.logger.info(f"Error in process_template: {e}")
             return None
 
 # Verwendung der NameListHandler-Klasse

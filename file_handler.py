@@ -5,11 +5,14 @@ from openpyxl import load_workbook
 from openpyxl.styles import Border, Side, Font, PatternFill
 import chardet
 import locale
+from ui.gui_log_handler import setup_logger
+#import logging
 
 class FileHandler:
-    def __init__(self):
-        logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+    def __init__(self, log_callback):
+        #logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
         locale.setlocale(locale.LC_NUMERIC, 'de_DE.UTF-8')  # Setze das deutsche Zahlenformat
+        self.logger = setup_logger(log_callback) # Initializiere das Logging
 
     def detect_encoding(self, file_path):
         with open(file_path, 'rb') as f:
@@ -21,7 +24,7 @@ class FileHandler:
         try:
             if file_extension == '.csv':
                 encoding = self.detect_encoding(file_path)
-                logging.info(f"Detected file encoding: {encoding}")
+                self.logger.info(f"Detected file encoding: {encoding}")
                 
                 if encoding.lower() in ['utf-8', 'utf-8-sig', 'utf-16', 'utf-16-le', 'utf-16-be']:
                     if encoding.lower() in ['utf-8-sig', 'utf-8']:
@@ -31,7 +34,7 @@ class FileHandler:
                 else:
                     raise ValueError(f"Unsupported file encoding: {encoding}")
                 
-                logging.info(f"DataFrame head:\n{df.head()}")
+                self.logger.info(f"DataFrame head:\n{df.head()}")
                 return df
             else:
                 raise ValueError("Unsupported file extension")
@@ -47,7 +50,7 @@ class FileHandler:
             
             # Nur die erste Spalte entfernen, aber alle Datenzeilen behalten
             trimmed_df = df.iloc[:, 1:]
-            logging.info(f"Trimmed DataFrame:\n{trimmed_df.head()}")
+            self.logger.info(f"Trimmed DataFrame:\n{trimmed_df.head()}")
             return trimmed_df
         except Exception as e:
             logging.error(f"An error occurred: {e}")
@@ -150,7 +153,7 @@ class FileHandler:
             # Neue Berechnung neben "Diff"
             ws.cell(row=last_row+4, column=8, value=f"=I{last_row}-H{last_row}")
 
-            logging.info(f"Successfully appended trimmed data to worksheet 'Prüf'")
+            self.logger.info(f"Successfully appended trimmed data to worksheet 'Prüf'")
             return wb
         except Exception as e:
             logging.error(f"An error occurred: {e}")

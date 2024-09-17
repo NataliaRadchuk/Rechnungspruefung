@@ -3,11 +3,12 @@ from ttkbootstrap import ttk
 from .styles import reapply_styles  # Import the reapply_styles function
 
 class SettingsTab:
-    def __init__(self, notebook, style):
+    def __init__(self, notebook, style, logger):
         self.style = style
         self.font_size = 14  # Default font size
         self.frame = ttk.Frame(notebook, padding="10")
         notebook.add(self.frame, text="Settings")
+        self.logger = logger
         self.create_widgets()
 
     def create_widgets(self):

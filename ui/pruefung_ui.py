@@ -4,33 +4,34 @@ from ttkbootstrap import ttk
 from pruefung_handler import PruefungHandler
 import os
 import threading
-import logging
-from .gui_log_handler import GUILogHandler
+#import logging
+#from .gui_log_handler import GUILogHandler
 
 class PruefungTab:
-    def __init__(self, notebook, style):
+    def __init__(self, notebook, style, logger):
         self.style = style
         self.font_size = 14
         self.frame = ttk.Frame(notebook, padding="10")
         notebook.add(self.frame, text="Prüfung")
+        self.logger = logger
         self.create_widgets()
-        self.file_ops = PruefungHandler()
-        self.setup_logger()
+        self.file_ops = PruefungHandler(self.logger)
+        #self.setup_logger()
 
-    def setup_logger(self):
-        logger = logging.getLogger()
-        logger.setLevel(logging.INFO)
+    # def setup_logger(self):
+    #     logger = logging.getLogger()
+    #     logger.setLevel(logging.INFO)
         
-        # Entfernen Sie alle bestehenden Handler
-        for handler in logger.handlers[:]:
-            logger.removeHandler(handler)
+    #     # Entfernen Sie alle bestehenden Handler
+    #     for handler in logger.handlers[:]:
+    #         logger.removeHandler(handler)
         
-        # Fügen Sie den benutzerdefinierten GUI-Handler hinzu
-        gui_handler = GUILogHandler(self.update_log)
-        gui_handler.setLevel(logging.INFO)
-        formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-        gui_handler.setFormatter(formatter)
-        logger.addHandler(gui_handler)
+    #     # Fügen Sie den benutzerdefinierten GUI-Handler hinzu
+    #     gui_handler = GUILogHandler(self.update_log)
+    #     gui_handler.setLevel(logging.INFO)
+    #     formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+    #     gui_handler.setFormatter(formatter)
+    #     logger.addHandler(gui_handler)
 
     def create_widgets(self):
         self.frame.columnconfigure(1, weight=1)
@@ -154,11 +155,11 @@ class PruefungTab:
         try:
             success, message = self.file_ops.process_files(input_file, namensliste_file, option_aktiviert, output_dir, output_filename)
             if success:
-                self.update_log("Vorgang erfolgreich abgeschlossen.")
+                self.logger.info("Vorgang erfolgreich abgeschlossen.")
             else:
-                self.update_log(f"An error occurred: {message}")
+                self.logger.error(f"An error occurred: {message}")
         except Exception as e:
-            self.update_log(f"An error occurred: {str(e)}")
+            self.logger.error(f"An error occurred: {str(e)}")
         finally:
             # Aufgabe 1: Reaktiviere den Start-Button nach Abschluss der Verarbeitung
             self.frame.after(0, lambda: self.process_button.config(state=tk.NORMAL))
