@@ -83,8 +83,9 @@ class NameListHandler:
         copied_df['F'] = copied_df['F'].astype(str) + '-F'
         pandas_file = pd.concat([pandas_file, copied_df], ignore_index=True)
 
-        # Alphabetisch sortieren nach Spalte C
-        pandas_file = pandas_file.sort_values(by='C')
+        # Mehrstufiges Sortieren der DataFrame
+        pandas_file = pandas_file.sort_values(by=['A', 'C', 'I', 'J'], ascending=[True, True, True, True])
+
 
         #logging.info(f"Prepared DataFrame:\n{pandas_file}")
         return pandas_file
